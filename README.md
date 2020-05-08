@@ -12,3 +12,5 @@
 3. views V : 视图,通过ejs模板引擎渲染的页面
 4. public : 存放一些资源(image,css,icon,js)
 5. data : 模拟数据(需要导入到mongodb内 比如:  mongoimport -d stu -c students student.txt) 
+6.route :对路由的处理
+
