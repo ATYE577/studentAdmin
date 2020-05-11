@@ -10,7 +10,7 @@
     <!--[if IE]>
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
         <![endif]-->
-    <title>学生信息</title>
+    <title>管理员信息</title>
     <!-- BOOTSTRAP CORE STYLE  -->
     <link href="/css/bootstrap.css" rel="stylesheet">
     <!-- FONT AWESOME ICONS  -->
@@ -27,17 +27,17 @@
 </head>
 
 <body>
-    <%- include('./header.ejs',{idx:'index'}) %>
-    <ul class='breadcrumb'>
-        <li><a href="">Home</a></li>
-        <li><a href=""><%= new Date().getFullYear() %></a></li>
-        <li class='active'>学生管理</li>
-    </ul>
+    <%- include('./header.ejs',{idx:'admin'}) %>
+    <ol class="breadcrumb">
+	    <li><a href="">Home</a></li>
+	    <li><a href="javascript:;">管理员管理</a></li>
+	    <li class="active">管理员列表</li>
+	</ol>
     <div class="content-wrapper">
         <div class="container">
             <div class="row pull-left" style='width:50%;'>
                 <div class="input-group">
-                    <input type="search" class="form-control search" list='dataList' placeholder="请输入学生姓名">
+                    <input type="search" class="form-control search" list='dataList' placeholder="请输入管理员信息">
                     <datalist id='dataList'>
                         
                     </datalist>
@@ -47,17 +47,18 @@
             <input type="button" value="导出为Excel" class='exportExcel pull-right btn btn-success'>
             <iframe id='exportExcel' width="0"; height="0" src="" frameborder="0"></iframe>
             <table class="table">
-                <caption>学员列表</caption>
+                <caption>管理员列表</caption>
                 <thead>
                     <tr>
-                        <th>学号</th>
-                        <th>名字</th>
-                        <th>性别</th>
-                        <th>年龄</th>
+                        <th>AdminId</th>
+                        <th>username</th>
+                        <th>password</th>
+                        <th>postTime</th>
+                        <th>lastLoginTime</th>
                         <th>[操作]</th>
                     </tr>
                 </thead>
-                <tbody class='studentList'>
+                <tbody class='adminList'>
                     
                 </tbody>
             </table>
@@ -73,44 +74,44 @@
     <!-- BOOTSTRAP SCRIPTS  -->
     <script src="/js/bootstrap.js"></script>
     <script src="/js/pagination.js"></script>
-    <script>
-        $(function (){
-            new StudentList();
+    <script>   
+        $(function(){
+            new AdminList();
         })
-        function StudentList(){
-            this.page = 1; //默认页
+        function AdminList(){
+            this.page = 1;//默认页数
 
             this.init();
 
             this.bindEvent();
         }
-        StudentList.prototype.init = function (){
+        AdminList.prototype.init = function(){
             var _this = this;
-            $.get('/student/msg',{page:this.page},function (res){
-                //console.log(res);
+            $.get('/admin/msg',{page:this.page},function (res){
                 _this.renderDom(res);
 
             });
         }
-        StudentList.prototype.renderDom = function (data){
+        AdminList.prototype.renderDom = function (data){
             //console.log(data);
             var _this = this;
             if(data.results.length > 0){
                 //渲染DOM
-                $('.studentList').empty();
+                $('.adminList').empty();
                 $.each(data.results,function (idx,item){
                     var tr = $('<tr></tr>');
                     tr.html(`
-                        <td>${item.sid}</td>
-                        <td contenteditable="true">${item.name}</td>
-                        <td contenteditable="true">${item.sex}</td>
-                        <td contenteditable="true">${item.age}</td>
+                        <td>${item._id}</td>
+                        <td contenteditable="true">${item.username}</td>
+                        <td contenteditable="true">${item.password}</td>
+                        <td contenteditable="true">${item.posttime}</td>
+                        <td contenteditable="true">${item.lastLoginTime}</td>
                         <td>
-                            <input type="button" value='删除' class='btn btn-warning del' data-sid='${item.sid}'>
-                            <input type="button" value='修改' class='btn btn-info change' data-sid='${item.sid}'>
+                            <input type="button" value='删除' class='btn btn-warning del' data-sid='${item._id}'>
+                            <input type="button" value='修改' class='btn btn-info change' data-sid='${item._id}'>
                         </td>
                     `);
-                    tr.appendTo($('.studentList'));
+                    tr.appendTo($('.adminList'));
                 })
                 //渲染分页:
                 pagination.init({
@@ -120,7 +121,7 @@
                     currentPage: _this.page, //当前页
                     onPagechange: function (n) {
                         //页面改变时触发， 参数 n 为改变后的当前页数
-                        console.log(n);
+                        // console.log(n);
                         _this.page = n;
                         _this.init();
                     }
@@ -132,15 +133,15 @@
                     _this.init();
                 }else{
                     $('#wrap').empty();
-                    $('.studentList').html('暂无数据');
+                    $('.adminList').html('暂无数据');
                 }
             }
         }
-        StudentList.prototype.bindEvent = function (){
+        AdminList.prototype.bindEvent = function (){
             var _this = this;
             //通过学生姓名模糊搜索
-            $('.search').on('input',this.searchStudent.bind(this));
-            //跳转新窗口渲染学生数据
+            $('.search').on('input',this.searchAdmin.bind(this));
+            // //跳转新窗口渲染学生数据
             $('.search').on('keydown',function (e){
                 if( e.keyCode == 13 ){
                     //console.log('回车');
@@ -151,38 +152,34 @@
                 _this.searchData.results && _this.renderDom(_this.searchData);
             });
             
-            //修改学生信息:
-            $('.studentList').delegate('.change','click',function (){
-                var sid = $(this).attr('data-sid');
+            //修改管理员信息:
+            $('.adminList').delegate('.change','click',function (){
+                var _id = $(this).attr('data-sid');
                 var childrens = $(this).parent().parent().children();
-                var uname = childrens.eq(1).text();
-                var sex = childrens.eq(2).text();
-                var age = parseInt(childrens.eq(3).text());               
-                if( sex != '男' && sex != '女' ){
-                    alert('请输入正确的性别');
-                    return;
-                }   
-                if( isNaN(age) ){
-                    alert('请输入数字年龄');
-                    return;
-                }               
-                $.post('/student/'+sid,{uname,sex,age},function (res){
-                    //console.log(res);
+
+                var username = childrens.eq(1).text();
+                var password = childrens.eq(2).text();
+                var posttime = childrens.eq(3).text();
+                var lastLoginTime = childrens.eq(4).text();   
+
+                $.post('/admin/'+_id,{username,password,posttime,lastLoginTime},function (res){
+                    // console.log(res);
                     if( res.error == 1 ){
                         alert('修改成功');
+                        _this.init();
                     }else{
                         alert('修改失败');
                     }
                 });
             })
 
-            //删除
-            $('.studentList').delegate('.del','click',function (){
+            // 删除
+            $('.adminList').delegate('.del','click',function (){
                 var xuehao = $(this).attr('data-sid');
                 var _confirm = confirm('确认删除?');
                 if( _confirm ){
                     $.ajax({
-                        url :'/student/'+xuehao,
+                        url :'/admin/'+xuehao,
                         type:'delete',
                         success(res){
                             // console.log(res);
@@ -197,27 +194,19 @@
                 }
             })
 
-            //导出为excel表 格式为xlsx  js-xlsx
+            // 导出为excel表 格式为xlsx  js-xlsx
             $('.exportExcel').on('click',function(){
-                var _confirm = confirm('确定导出所有学生数据?');
+                var _confirm = confirm('确定导出所有管理员数据?');
                 if( !_confirm ) return;
-                $.get('/student/exportExcel',function(res){
+                $.get('/admin/exportExcel',function(res){
                     // console.log(res);
                     if(res.error){
-                        // window.location.href = res.msg;//不让访问线上的
-                        // exportExcel.src= res.msg;//不让访问线上的
-
-                        //已下是更改方式
-                        //banji.xlsx http://localhost:3000/public/banji.xlsx
-                        // console.log(window.location);//href
-                        // console.log( window.location + 'excel/'+ res.msg);
-                        // return;//http://localhost:3000/excel/class.xlsx
-                        window.location = window.location + 'excel/'+ res.msg;
+                        window.location = window.location.origin + '/excel/'+ res.msg;
                     }
                 })
             })
         }
-        StudentList.prototype.searchStudent = function (){
+        AdminList.prototype.searchAdmin = function (){
             var _this = this;
             var val = $('.search').val();           
             if( !val ){
@@ -225,16 +214,16 @@
                 this.init();
                 return;
             }
-            $.get('/student/search',{search:val},function (res){
+            $.get('/admin/search',{search:val},function (res){
                 // console.log(res);
                 $('#dataList').empty();
                 if(res.data.length > 0){
-                    //设置全局搜索数据格式
+                    // 设置全局搜索数据格式
                     
                     $.each(res.data,function (idx,item){
                         var option = $('<option></option>');
-                        option.val(item.name);
-                        option.text(item.name);
+                        option.val(item.username);
+                        option.text(item.username);
                         option.appendTo($('#dataList'));
                     })  
                     _this.searchData = {
